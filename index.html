@@ -407,6 +407,38 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 </main>
 </div>
 
+<!-- ── 수정 모달 ── -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 16px 48px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div style="font-size:16px;font-weight:600">내역 수정</div>
+      <button onclick="closeEditModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1;padding:2px 6px">×</button>
+    </div>
+    <div class="fg">
+      <div class="ff"><label>날짜</label><input type="date" id="e-date"/></div>
+      <div class="ff"><label>카테고리</label><select id="e-cat"></select></div>
+      <div class="ff full"><label>내용</label><input type="text" id="e-desc" placeholder="내용"/></div>
+      <div class="ff full"><label>금액 (원)</label><input type="number" id="e-amt" placeholder="0" min="1"/></div>
+      <div class="ff full"><label>메모</label><input type="text" id="e-memo" placeholder="메모 (선택)"/></div>
+      <div class="ff full">
+        <label>구분</label>
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text)">
+            <input type="radio" name="e-type" value="income" id="e-type-inc"> 수입
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text)">
+            <input type="radio" name="e-type" value="expense" id="e-type-exp"> 지출
+          </label>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.25rem">
+      <button class="btn bg" style="flex:1" onclick="closeEditModal()">취소</button>
+      <button class="btn bi" style="flex:2" onclick="saveEdit()">✓ 수정 저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="epicker" id="epicker" style="display:none"></div>
 
 <script>
@@ -675,7 +707,17 @@ function renderList(){
   if(month)data=data.filter(t=>t.d.startsWith(month));
   if(q)    data=data.filter(t=>t.desc.toLowerCase().includes(q)||t.c.toLowerCase().includes(q));
   document.getElementById('l-cnt').textContent=data.length+'건';
-  document.getElementById('l-body').innerHTML=data.length?data.map(t=>`<tr><td style="font-family:'DM Mono',monospace;color:var(--text2)">${t.d}</td><td><div style="font-weight:500">${t.desc}</div>${t.m?`<div style="font-size:11px;color:var(--text3)">${t.m}</div>`:''}</td><td>${emoji(t.c)} ${t.c}</td><td><span class="tbadge ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'수입':'지출'}</span></td><td style="text-align:right" class="ac ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'+':'-'}${fmt(t.a)}</td><td><button class="delbtn" onclick="delTx(${t.id})">×</button></td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">내역이 없습니다</td></tr>';
+  document.getElementById('l-body').innerHTML=data.length?data.map(t=>`<tr>
+    <td style="font-family:'DM Mono',monospace;color:var(--text2)">${t.d}</td>
+    <td><div style="font-weight:500">${t.desc}</div>${t.m?`<div style="font-size:11px;color:var(--text3)">${t.m}</div>`:''}</td>
+    <td>${emoji(t.c)} ${t.c}</td>
+    <td><span class="tbadge ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'수입':'지출'}</span></td>
+    <td style="text-align:right" class="ac ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'+':'-'}${fmt(t.a)}</td>
+    <td style="white-space:nowrap">
+      <button class="delbtn" onclick="openEditModal(${t.id})" style="color:var(--text2);margin-right:2px" title="수정">✏️</button>
+      <button class="delbtn" onclick="delTx(${t.id})" title="삭제">×</button>
+    </td>
+  </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">내역이 없습니다</td></tr>';
 }
 
 // ══════════════════════════════════════════
@@ -822,6 +864,84 @@ async function selEmoji(e){
   } catch(err){ toast('이모지 변경 실패: '+err.message, true); }
 }
 document.addEventListener('click', e=>{ const p=document.getElementById('epicker'); if(!p.contains(e.target)&&!e.target.classList.contains('cemoji')) p.style.display='none'; });
+
+// ══════════════════════════════════════════
+//  EDIT MODAL
+// ══════════════════════════════════════════
+let editingId = null;
+
+function openEditModal(id){
+  const t = TX.find(t=>t.id===id);
+  if(!t) return;
+  editingId = id;
+
+  // 카테고리 옵션 채우기
+  document.getElementById('e-cat').innerHTML=
+    `<optgroup label="수입 카테고리">${CATS.income.map(c=>`<option value="${c.n}">${c.e} ${c.n}</option>`).join('')}</optgroup>`+
+    `<optgroup label="지출 카테고리">${CATS.expense.map(c=>`<option value="${c.n}">${c.e} ${c.n}</option>`).join('')}</optgroup>`;
+
+  // 값 채우기
+  document.getElementById('e-date').value = t.d;
+  document.getElementById('e-cat').value  = t.c;
+  document.getElementById('e-desc').value = t.desc;
+  document.getElementById('e-amt').value  = t.a;
+  document.getElementById('e-memo').value = t.m||'';
+  document.getElementById(t.t==='income'?'e-type-inc':'e-type-exp').checked = true;
+
+  const modal = document.getElementById('edit-modal');
+  modal.style.display = 'flex';
+}
+
+function closeEditModal(){
+  document.getElementById('edit-modal').style.display = 'none';
+  editingId = null;
+}
+
+async function saveEdit(){
+  if(!editingId) return;
+  const date  = document.getElementById('e-date').value;
+  const cat   = document.getElementById('e-cat').value;
+  const title = document.getElementById('e-desc').value.trim();
+  const amt   = parseFloat(document.getElementById('e-amt').value);
+  const memo  = document.getElementById('e-memo').value.trim();
+  const type  = document.querySelector('input[name="e-type"]:checked')?.value;
+
+  if(!date||!title||!amt||amt<=0||!type){ alert('모든 필드를 입력해주세요.'); return; }
+
+  const btn = document.querySelector('#edit-modal .btn.bi');
+  const orig = btn.textContent; btn.textContent='저장 중...'; btn.disabled=true;
+
+  try {
+    const { error } = await sb.from('transactions').update({
+      type, date, title, category: cat, amount: amt, memo
+    }).eq('id', editingId);
+    if(error) throw error;
+
+    // 로컬 TX 업데이트
+    const idx = TX.findIndex(t=>t.id===editingId);
+    if(idx>-1) TX[idx] = { id:editingId, t:type, d:date, desc:title, c:cat, a:amt, m:memo };
+
+    closeEditModal();
+    rSide();
+    renderList();
+    // 현재 보이는 다른 페이지도 갱신
+    const pg = document.querySelector('.page.active').id;
+    if(pg==='page-dashboard')   rDash();
+    if(pg==='page-stats-day')   rStatDay();
+    if(pg==='page-stats-month') rStatMonth();
+    if(pg==='page-stats-year')  rStatYear();
+    toast('✓ 수정 저장됨');
+  } catch(e){
+    toast('수정 실패: '+e.message, true);
+  } finally {
+    btn.textContent=orig; btn.disabled=false;
+  }
+}
+
+// 모달 바깥 클릭 시 닫기
+document.getElementById('edit-modal').addEventListener('click', e=>{
+  if(e.target===document.getElementById('edit-modal')) closeEditModal();
+});
 
 // ══════════════════════════════════════════
 //  DELETE TRANSACTION
