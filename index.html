@@ -191,7 +191,7 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 .cal-detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-top:10px}
 
 /* ── Responsive: Tablet ── */
-@media(max-width:900px){
+@media(max-width:1024px){
   aside{width:220px}
   main{margin-left:220px;padding:1.25rem}
   .tcol{grid-template-columns:1fr}
@@ -201,23 +201,21 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 }
 
 /* ── Responsive: Mobile ── */
-@media(max-width:640px){
-  /* 사이드바 숨김 → 하단 탭바로 대체 */
+@media(max-width:820px){
   aside{display:none}
-  main{margin-left:0;padding:1rem 0.875rem;padding-bottom:80px}
+  .shell{display:block}
+  main{margin-left:0;padding:1rem 0.875rem 80px}
 
-  /* 하단 탭바 */
-  #mob-tabbar{display:flex}
+  #mob-tabbar{display:flex !important}
+  #mob-header{display:flex !important}
 
-  /* 전체 메뉴 드로어 */
-  #mob-drawer{display:flex}
-
-  /* 상단 모바일 헤더 */
-  #mob-header{display:flex}
-
-  /* 메트릭 카드 1열 */
-  .mrow{grid-template-columns:1fr}
-  .mc .mv{font-size:20px}
+  /* 메트릭 카드: 가로 3열 작게 */
+  .mrow{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+  .mc{padding:0.75rem 0.6rem}
+  .mc .ml{font-size:9px;margin-bottom:4px;letter-spacing:0.04em}
+  .mc .mv{font-size:14px;letter-spacing:-0.5px}
+  .mc .ms{font-size:10px}
+  .mbadge{font-size:9px;padding:1px 5px;margin-top:3px}
 
   /* 2열 → 1열 */
   .sg2{grid-template-columns:1fr}
@@ -226,40 +224,34 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
   .fg{grid-template-columns:1fr}
   .ff.full{grid-column:1}
 
-  /* 폰트·여백 */
+  /* topbar */
   .ptitle{font-size:18px}
-  .topbar{margin-bottom:1rem}
+  .topbar{margin-bottom:0.875rem;flex-direction:column;gap:8px}
+  .topbar > div:last-child{align-self:flex-start}
   .card{padding:0.875rem 1rem}
 
-  /* 버튼 높이 */
+  /* 버튼 */
   .btn{padding:12px 10px;font-size:14px}
   .bsm{padding:10px 12px;font-size:13px}
   .btnpair{gap:10px}
 
-  /* 입력창 */
-  .ff input,.ff select,.ff textarea{font-size:16px;padding:11px 12px} /* 16px = iOS 줌 방지 */
+  /* 입력창 (16px → iOS 줌 방지) */
+  .ff input,.ff select,.ff textarea{font-size:16px;padding:11px 12px}
 
-  /* 테이블 → 카드 리스트 */
-  .ft-mobile-hide{display:none}
+  /* 테이블 헤더 숨김 */
   .ft thead{display:none}
-  .ft tbody tr{display:flex;flex-direction:column;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
-  .ft tbody td{padding:2px 0;border:none;font-size:13px}
-  .ft tfoot tr{display:flex;flex-direction:column;padding:10px 12px}
-  .ft tfoot td{padding:2px 0;border:none}
+  .ft tbody tr{display:block;border-bottom:1px solid var(--border)}
+  .ft tfoot tr{display:block}
 
-  /* TX 아이템 간격 */
+  /* TX 아이템 */
   .txi{padding:11px 0}
   .txd{font-size:14px}
   .txa{font-size:14px}
 
-  /* 캘린더 셀 축소 */
+  /* 캘린더 셀 */
   .cal-cell{min-height:52px;padding:4px}
   .cal-num{font-size:11px}
   .cal-inc-bar,.cal-exp-bar{font-size:9px}
-
-  /* 탑바 버튼 그룹 */
-  .topbar{flex-direction:column;gap:8px}
-  .topbar > div:last-child{align-self:flex-start}
 }
 
 /* 하단 탭바 (모바일 전용, 기본 숨김) */
@@ -282,7 +274,8 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
   display:none;position:sticky;top:0;z-index:250;
   background:var(--accent);color:#fff;
   height:52px;align-items:center;justify-content:space-between;
-  padding:0 1rem;margin:-1rem -0.875rem 1rem;
+  padding:0 1rem;
+  margin-bottom:1rem;
 }
 #mob-header .mh-title{font-size:16px;font-weight:700;color:#fff}
 #mob-header .mh-title em{color:#9bce9e;font-style:normal}
@@ -1044,7 +1037,7 @@ function renderList(){
   if(q)data=data.filter(t=>t.desc.toLowerCase().includes(q)||t.c.toLowerCase().includes(q));
 
   document.getElementById('l-cnt').textContent=data.length+'건';
-  const isMob=window.innerWidth<=640;
+  const isMob=window.innerWidth<=820;
 
   if(isMob){
     // 모바일: TX 카드 리스트 형태
