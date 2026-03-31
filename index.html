@@ -190,9 +190,133 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 .cal-fixed-dot{position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:#BA7517}
 .cal-detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;margin-top:10px}
 
-/* Responsive */
-@media(max-width:900px){aside{width:220px}main{margin-left:220px;padding:1.25rem}.tcol{grid-template-columns:1fr}.mrow{grid-template-columns:1fr 1fr}.sg2{grid-template-columns:1fr}.cmg{grid-template-columns:1fr}}
-@media(max-width:640px){.mrow{grid-template-columns:1fr}}
+/* ── Responsive: Tablet ── */
+@media(max-width:900px){
+  aside{width:220px}
+  main{margin-left:220px;padding:1.25rem}
+  .tcol{grid-template-columns:1fr}
+  .mrow{grid-template-columns:1fr 1fr}
+  .sg2{grid-template-columns:1fr}
+  .cmg{grid-template-columns:1fr}
+}
+
+/* ── Responsive: Mobile ── */
+@media(max-width:640px){
+  /* 사이드바 숨김 → 하단 탭바로 대체 */
+  aside{display:none}
+  main{margin-left:0;padding:1rem 0.875rem;padding-bottom:80px}
+
+  /* 하단 탭바 */
+  #mob-tabbar{display:flex}
+
+  /* 전체 메뉴 드로어 */
+  #mob-drawer{display:flex}
+
+  /* 상단 모바일 헤더 */
+  #mob-header{display:flex}
+
+  /* 메트릭 카드 1열 */
+  .mrow{grid-template-columns:1fr}
+  .mc .mv{font-size:20px}
+
+  /* 2열 → 1열 */
+  .sg2{grid-template-columns:1fr}
+  .tcol{grid-template-columns:1fr}
+  .cmg{grid-template-columns:1fr}
+  .fg{grid-template-columns:1fr}
+  .ff.full{grid-column:1}
+
+  /* 폰트·여백 */
+  .ptitle{font-size:18px}
+  .topbar{margin-bottom:1rem}
+  .card{padding:0.875rem 1rem}
+
+  /* 버튼 높이 */
+  .btn{padding:12px 10px;font-size:14px}
+  .bsm{padding:10px 12px;font-size:13px}
+  .btnpair{gap:10px}
+
+  /* 입력창 */
+  .ff input,.ff select,.ff textarea{font-size:16px;padding:11px 12px} /* 16px = iOS 줌 방지 */
+
+  /* 테이블 → 카드 리스트 */
+  .ft-mobile-hide{display:none}
+  .ft thead{display:none}
+  .ft tbody tr{display:flex;flex-direction:column;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .ft tbody td{padding:2px 0;border:none;font-size:13px}
+  .ft tfoot tr{display:flex;flex-direction:column;padding:10px 12px}
+  .ft tfoot td{padding:2px 0;border:none}
+
+  /* TX 아이템 간격 */
+  .txi{padding:11px 0}
+  .txd{font-size:14px}
+  .txa{font-size:14px}
+
+  /* 캘린더 셀 축소 */
+  .cal-cell{min-height:52px;padding:4px}
+  .cal-num{font-size:11px}
+  .cal-inc-bar,.cal-exp-bar{font-size:9px}
+
+  /* 탑바 버튼 그룹 */
+  .topbar{flex-direction:column;gap:8px}
+  .topbar > div:last-child{align-self:flex-start}
+}
+
+/* 하단 탭바 (모바일 전용, 기본 숨김) */
+#mob-tabbar{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
+  background:var(--accent);border-top:1px solid rgba(255,255,255,0.08);
+  height:60px;align-items:stretch;
+}
+#mob-tabbar button{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;background:none;border:none;color:rgba(255,255,255,0.45);cursor:pointer;
+  font-size:9px;font-family:inherit;padding:0;transition:color 0.15s;
+}
+#mob-tabbar button .tbi{font-size:20px;line-height:1}
+#mob-tabbar button.active{color:#9bce9e}
+#mob-tabbar button:active{opacity:0.7}
+
+/* 모바일 상단 헤더 (기본 숨김) */
+#mob-header{
+  display:none;position:sticky;top:0;z-index:250;
+  background:var(--accent);color:#fff;
+  height:52px;align-items:center;justify-content:space-between;
+  padding:0 1rem;margin:-1rem -0.875rem 1rem;
+}
+#mob-header .mh-title{font-size:16px;font-weight:700;color:#fff}
+#mob-header .mh-title em{color:#9bce9e;font-style:normal}
+#mob-header .mh-right{display:flex;align-items:center;gap:8px}
+#mob-header .mh-bal{font-size:12px;font-family:'DM Mono',monospace;color:#9bce9e}
+#mob-header .mh-menu{background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:4px;line-height:1}
+
+/* 전체 메뉴 드로어 (기본 숨김) */
+#mob-drawer{
+  display:none;position:fixed;inset:0;z-index:400;
+}
+#mob-drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,0.5)}
+#mob-drawer-panel{
+  position:absolute;top:0;right:0;bottom:0;width:75%;max-width:280px;
+  background:var(--accent);display:flex;flex-direction:column;padding:1.5rem 1.25rem;overflow-y:auto;
+  transform:translateX(100%);transition:transform 0.25s ease;
+}
+#mob-drawer-panel.open{transform:translateX(0)}
+#mob-drawer .mdr-close{background:none;border:none;color:rgba(255,255,255,0.5);font-size:22px;cursor:pointer;align-self:flex-end;margin-bottom:1rem;line-height:1}
+#mob-drawer .mdr-box{background:rgba(255,255,255,0.06);border-radius:10px;padding:0.875rem 1rem;margin-bottom:1.25rem}
+#mob-drawer .mdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#mob-drawer .mdr-row:last-child{margin-bottom:0}
+#mob-drawer .mdr-label{font-size:11px;color:rgba(255,255,255,0.4)}
+#mob-drawer .mdr-val{font-size:13px;font-weight:500;font-family:'DM Mono',monospace}
+#mob-drawer .mdr-val.inc{color:#9bce9e}
+#mob-drawer .mdr-val.exp{color:#e58080}
+#mob-drawer .mdr-val.bal{color:#fff}
+#mob-drawer .mdr-div{height:0.5px;background:rgba(255,255,255,0.1);margin:6px 0}
+#mob-drawer .dni{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--rs);cursor:pointer;color:rgba(255,255,255,0.5);font-size:14px;border:none;background:none;width:100%;text-align:left;transition:all 0.15s}
+#mob-drawer .dni:active{background:rgba(255,255,255,0.07)}
+#mob-drawer .dni.active{color:#fff;background:rgba(255,255,255,0.13);font-weight:500}
+#mob-drawer .dni .ic{font-size:16px;width:20px;text-align:center}
+#mob-drawer .dnsec{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:0.1em;padding:10px 12px 4px;text-transform:uppercase}
+#mob-drawer .mdr-badge{font-size:10px;color:rgba(255,255,255,0.3);text-align:center;margin-top:6px;font-family:'DM Mono',monospace;cursor:pointer}
 </style>
 </head>
 <body>
@@ -209,6 +333,63 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
     <button class="rg-btn" onclick="enterRoom()">입장하기 →</button>
   </div>
   <div class="rg-hint">URL에 ?room=코드 를 붙여도 바로 접속됩니다</div>
+</div>
+
+<!-- ── 모바일 상단 헤더 ── -->
+<div id="mob-header">
+  <div class="mh-title">가계부<em>.</em></div>
+  <div class="mh-right">
+    <span class="mh-bal" id="mob-bal">₩0</span>
+    <button class="mh-menu" onclick="openDrawer()">☰</button>
+  </div>
+</div>
+
+<!-- ── 모바일 전체 메뉴 드로어 ── -->
+<div id="mob-drawer">
+  <div id="mob-drawer-bg" onclick="closeDrawer()"></div>
+  <div id="mob-drawer-panel">
+    <button class="mdr-close" onclick="closeDrawer()">✕</button>
+    <div class="mdr-box">
+      <div class="mdr-row"><span class="mdr-label">총 수입</span><span class="mdr-val inc" id="md-inc">₩0</span></div>
+      <div class="mdr-row"><span class="mdr-label">총 지출</span><span class="mdr-val exp" id="md-exp">₩0</span></div>
+      <div class="mdr-div"></div>
+      <div class="mdr-row"><span class="mdr-label">누적 잔액</span><span class="mdr-val bal" id="md-bal">₩0</span></div>
+      <div id="mob-sync" class="mdr-badge">● 연결 중...</div>
+      <div id="mob-room-badge" class="mdr-badge" onclick="changeRoom()"></div>
+    </div>
+    <div class="nsec" style="color:rgba(255,255,255,0.25);font-size:10px;letter-spacing:0.1em;padding:0 12px 4px;text-transform:uppercase">메뉴</div>
+    <button class="dni active" id="mni-dashboard" onclick="go('dashboard');closeDrawer()"><span class="ic">📊</span>대시보드</button>
+    <button class="dni" id="mni-add" onclick="go('add');closeDrawer()"><span class="ic">✏️</span>내역 추가</button>
+    <button class="dni" id="mni-list" onclick="go('list');closeDrawer()"><span class="ic">📋</span>전체 내역</button>
+    <button class="dni" id="mni-calendar" onclick="go('calendar');closeDrawer()"><span class="ic">📅</span>캘린더</button>
+    <div class="nsec" style="color:rgba(255,255,255,0.25);font-size:10px;letter-spacing:0.1em;padding:10px 12px 4px;text-transform:uppercase">통계</div>
+    <button class="dni" id="mni-stats-day" onclick="go('stats-day');closeDrawer()"><span class="ic">📈</span>일별 통계</button>
+    <button class="dni" id="mni-stats-month" onclick="go('stats-month');closeDrawer()"><span class="ic">🗓</span>월별 통계</button>
+    <button class="dni" id="mni-stats-year" onclick="go('stats-year');closeDrawer()"><span class="ic">📆</span>연별 통계</button>
+    <div class="nsec" style="color:rgba(255,255,255,0.25);font-size:10px;letter-spacing:0.1em;padding:10px 12px 4px;text-transform:uppercase">설정</div>
+    <button class="dni" id="mni-fixed" onclick="go('fixed');closeDrawer()"><span class="ic">🔁</span>고정비 관리</button>
+    <button class="dni" id="mni-categories" onclick="go('categories');closeDrawer()"><span class="ic">🏷</span>카테고리 관리</button>
+    <button class="dni" id="mni-import" onclick="go('import');closeDrawer()"><span class="ic">📥</span>데이터 가져오기</button>
+  </div>
+</div>
+
+<!-- ── 모바일 하단 탭바 ── -->
+<div id="mob-tabbar">
+  <button id="mtab-dashboard" onclick="go('dashboard')" class="active">
+    <span class="tbi">📊</span><span>홈</span>
+  </button>
+  <button id="mtab-add" onclick="go('add')">
+    <span class="tbi">✏️</span><span>추가</span>
+  </button>
+  <button id="mtab-list" onclick="go('list')">
+    <span class="tbi">📋</span><span>내역</span>
+  </button>
+  <button id="mtab-calendar" onclick="go('calendar')">
+    <span class="tbi">📅</span><span>캘린더</span>
+  </button>
+  <button id="mtab-more" onclick="openDrawer()">
+    <span class="tbi">☰</span><span>더보기</span>
+  </button>
 </div>
 
 <div class="shell">
@@ -659,6 +840,7 @@ async function loadAll(){
     return;
   }
   document.getElementById('room-badge').textContent='🔑 '+ROOM_ID;
+  const mrb=document.getElementById('mob-room-badge');if(mrb)mrb.textContent='🔑 '+ROOM_ID;
 
   try{
     // Transactions
@@ -681,6 +863,7 @@ async function loadAll(){
 
     document.getElementById('sync-status').textContent='● Supabase 연결됨';
     document.getElementById('sync-status').className='sync-ok';
+    const ms=document.getElementById('mob-sync');if(ms){ms.textContent='● Supabase 연결됨';ms.style.color='#9bce9e';}
   }catch(e){
     console.error(e);
     document.getElementById('sync-status').textContent='● 연결 실패: '+e.message;
@@ -707,11 +890,38 @@ async function seedCats(){
 // ═══════════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// MOBILE NAV
+// ═══════════════════════════════════════════════════
+function openDrawer(){
+  const d=document.getElementById('mob-drawer');
+  d.style.display='flex';
+  setTimeout(()=>document.getElementById('mob-drawer-panel').classList.add('open'),10);
+}
+function closeDrawer(){
+  document.getElementById('mob-drawer-panel').classList.remove('open');
+  setTimeout(()=>document.getElementById('mob-drawer').style.display='none',250);
+}
+// 탭바·드로어 활성 상태 동기화
+const TAB_PAGES=['dashboard','add','list','calendar'];
+function syncMobNav(pg){
+  // 탭바
+  TAB_PAGES.forEach(p=>{
+    const btn=document.getElementById('mtab-'+p);
+    if(btn)btn.classList.toggle('active',p===pg);
+  });
+  // 드로어 메뉴
+  document.querySelectorAll('.dni').forEach(n=>n.classList.remove('active'));
+  const dn=document.getElementById('mni-'+pg);
+  if(dn)dn.classList.add('active');
+}
+
 function go(pg,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+pg).classList.add('active');
   if(el)el.classList.add('active');
+  syncMobNav(pg);
   if(pg==='dashboard')rDash();
   if(pg==='add')rAddForm();
   if(pg==='list'){rListFilters();renderList();}
@@ -725,17 +935,26 @@ function go(pg,el){
 }
 
 // ═══════════════════════════════════════════════════
-// SIDEBAR
+// SIDEBAR + MOBILE SUMMARY
 // ═══════════════════════════════════════════════════
 function rSide(){
   const inc=TX.filter(t=>t.t==='income').reduce((s,t)=>s+t.a,0);
   const exp=TX.filter(t=>t.t==='expense').reduce((s,t)=>s+t.a,0);
   const bal=inc-exp;
+  // PC 사이드바
   document.getElementById('s-inc').textContent=fmt(inc);
   document.getElementById('s-exp').textContent=fmt(exp);
   const sb2=document.getElementById('s-bal');
   sb2.textContent=(bal<0?'-':'')+fmt(bal);
   sb2.style.color=bal<0?'#e58080':bal>0?'#9bce9e':'rgba(255,255,255,0.7)';
+  // 모바일 헤더 잔액
+  const mb=document.getElementById('mob-bal');
+  if(mb){mb.textContent=(bal<0?'-':'')+fmt(bal);mb.style.color=bal<0?'#e58080':'#9bce9e';}
+  // 모바일 드로어 요약
+  const mi=document.getElementById('md-inc');const me=document.getElementById('md-exp');const mbal=document.getElementById('md-bal');
+  if(mi)mi.textContent=fmt(inc);
+  if(me)me.textContent=fmt(exp);
+  if(mbal){mbal.textContent=(bal<0?'-':'')+fmt(bal);mbal.style.color=bal<0?'#e58080':bal>0?'#9bce9e':'rgba(255,255,255,0.7)';}
 }
 
 // ═══════════════════════════════════════════════════
@@ -825,16 +1044,40 @@ function renderList(){
   if(q)data=data.filter(t=>t.desc.toLowerCase().includes(q)||t.c.toLowerCase().includes(q));
 
   document.getElementById('l-cnt').textContent=data.length+'건';
-  document.getElementById('l-body').innerHTML=data.length?data.map(t=>`<tr>
-    <td style="font-family:'DM Mono',monospace;color:var(--text2)">${t.d}</td>
-    <td><div style="font-weight:500">${t.desc}</div>${t.m?`<div style="font-size:11px;color:var(--text3)">${t.m}</div>`:''}</td>
-    <td>${emo(t.c)} ${t.c}</td>
-    <td><span class="tbadge ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'수입':'지출'}</span></td>
-    <td style="text-align:right" class="ac ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'+':'-'}${fmt(t.a)}</td>
-    <td style="white-space:nowrap">
-      <button class="delbtn" onclick="openEdit(${t.id})" title="수정">✏️</button>
-      <button class="delbtn" onclick="delTx(${t.id})">×</button>
-    </td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">내역이 없습니다</td></tr>';
+  const isMob=window.innerWidth<=640;
+
+  if(isMob){
+    // 모바일: TX 카드 리스트 형태
+    document.getElementById('l-body').innerHTML=data.length?data.map(t=>`<tr>
+      <td colspan="6" style="padding:0">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px">
+          <div style="width:36px;height:36px;border-radius:9px;background:${t.t==='income'?'var(--inc-bg)':'var(--exp-bg)'};display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">${emo(t.c)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.d} · ${t.c}${t.m?' · '+t.m:''}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:${t.t==='income'?'var(--inc)':'var(--exp)'}">${t.t==='income'?'+':'-'}${fmt(t.a)}</div>
+            <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px">
+              <button class="delbtn" onclick="openEdit(${t.id})" style="font-size:16px;padding:4px 6px" title="수정">✏️</button>
+              <button class="delbtn" onclick="delTx(${t.id})" style="font-size:16px;padding:4px 6px">×</button>
+            </div>
+          </div>
+        </div>
+      </td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">내역이 없습니다</td></tr>';
+  } else {
+    // PC: 기존 테이블
+    document.getElementById('l-body').innerHTML=data.length?data.map(t=>`<tr>
+      <td style="font-family:'DM Mono',monospace;color:var(--text2)">${t.d}</td>
+      <td><div style="font-weight:500">${t.desc}</div>${t.m?`<div style="font-size:11px;color:var(--text3)">${t.m}</div>`:''}</td>
+      <td>${emo(t.c)} ${t.c}</td>
+      <td><span class="tbadge ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'수입':'지출'}</span></td>
+      <td style="text-align:right" class="ac ${t.t==='income'?'inc':'exp'}">${t.t==='income'?'+':'-'}${fmt(t.a)}</td>
+      <td style="white-space:nowrap">
+        <button class="delbtn" onclick="openEdit(${t.id})" title="수정">✏️</button>
+        <button class="delbtn" onclick="delTx(${t.id})">×</button>
+      </td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">내역이 없습니다</td></tr>';
+  }
 
   // 합산 footer
   const totalInc=data.filter(t=>t.t==='income').reduce((s,t)=>s+t.a,0);
@@ -842,16 +1085,29 @@ function renderList(){
   const totalBal=totalInc-totalExp;
   const foot=document.getElementById('l-foot');
   if(data.length){
-    foot.innerHTML=`<tr style="background:var(--surface2)">
-      <td colspan="3" style="padding:10px 14px;font-size:12px;color:var(--text3);font-weight:500">필터 결과 합계 (${data.length}건)</td>
-      <td></td>
-      <td style="text-align:right;padding:10px 14px">
-        ${totalInc>0?`<div style="font-size:12px;color:var(--inc);font-family:'DM Mono',monospace;font-weight:600">수입 +${fmt(totalInc)}</div>`:''}
-        ${totalExp>0?`<div style="font-size:12px;color:var(--exp);font-family:'DM Mono',monospace;font-weight:600">지출 -${fmt(totalExp)}</div>`:''}
-        <div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:${totalBal<0?'var(--exp)':totalBal>0?'var(--inc)':'var(--text2)'};margin-top:2px;border-top:1px solid var(--border);padding-top:4px">잔액 ${totalBal<0?'-':'+'}${fmt(totalBal)}</div>
-      </td>
-      <td style="padding:10px 14px"></td>
-    </tr>`;
+    if(isMob){
+      foot.innerHTML=`<tr><td colspan="6" style="padding:12px;background:var(--surface2)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">필터 결과 합계 (${data.length}건)</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <div style="display:flex;gap:12px">
+            ${totalInc>0?`<span style="font-size:13px;color:var(--inc);font-family:'DM Mono',monospace;font-weight:600">+${fmt(totalInc)}</span>`:''}
+            ${totalExp>0?`<span style="font-size:13px;color:var(--exp);font-family:'DM Mono',monospace;font-weight:600">-${fmt(totalExp)}</span>`:''}
+          </div>
+          <span style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:${totalBal<0?'var(--exp)':totalBal>0?'var(--inc)':'var(--text2)'}">잔액 ${totalBal<0?'-':'+'}${fmt(totalBal)}</span>
+        </div>
+      </td></tr>`;
+    } else {
+      foot.innerHTML=`<tr style="background:var(--surface2)">
+        <td colspan="3" style="padding:10px 14px;font-size:12px;color:var(--text3);font-weight:500">필터 결과 합계 (${data.length}건)</td>
+        <td></td>
+        <td style="text-align:right;padding:10px 14px">
+          ${totalInc>0?`<div style="font-size:12px;color:var(--inc);font-family:'DM Mono',monospace;font-weight:600">수입 +${fmt(totalInc)}</div>`:''}
+          ${totalExp>0?`<div style="font-size:12px;color:var(--exp);font-family:'DM Mono',monospace;font-weight:600">지출 -${fmt(totalExp)}</div>`:''}
+          <div style="font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:${totalBal<0?'var(--exp)':totalBal>0?'var(--inc)':'var(--text2)'};margin-top:2px;border-top:1px solid var(--border);padding-top:4px">잔액 ${totalBal<0?'-':'+'}${fmt(totalBal)}</div>
+        </td>
+        <td style="padding:10px 14px"></td>
+      </tr>`;
+    }
   } else {
     foot.innerHTML='';
   }
@@ -986,7 +1242,7 @@ function rCalDetail(dateStr){
     :'<div class="empty" style="padding:1rem 0">이 날 내역이 없습니다</div>';
 }
 
-function goAddDate(){if(!calSel)return;document.getElementById('a-date').value=calSel;go('add',document.querySelectorAll('.ni')[1]);}
+function goAddDate(){if(!calSel)return;document.getElementById('a-date').value=calSel;go('add');}
 
 // ═══════════════════════════════════════════════════
 // STATS
