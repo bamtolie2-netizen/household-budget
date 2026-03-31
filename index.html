@@ -272,7 +272,7 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
       <div class="ff"><label>날짜</label><input type="date" id="a-date"/></div>
       <div class="ff"><label>카테고리</label><select id="a-cat"></select></div>
       <div class="ff full"><label>내용</label><input type="text" id="a-desc" placeholder="예: 점심식사, 3월 급여"/></div>
-      <div class="ff full"><label>금액 (원)</label><input type="number" id="a-amt" placeholder="0" min="1"/></div>
+      <div class="ff full"><label>금액 (원)</label><input type="text" id="a-amt" placeholder="0" inputmode="numeric" oninput="fmtInput(this)" style="font-family:'DM Mono',monospace"/></div>
       <div class="ff full"><label>메모 (선택)</label><input type="text" id="a-memo" placeholder="추가 메모"/></div>
     </div>
     <div class="btnpair">
@@ -412,7 +412,7 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
         <div class="ff"><label>매월 며칠</label><input type="number" id="fx-day" placeholder="예: 25" min="1" max="31"/></div>
         <div class="ff"><label>구분</label><select id="fx-type"><option value="expense">지출</option><option value="income">수입</option></select></div>
         <div class="ff"><label>카테고리</label><select id="fx-cat"></select></div>
-        <div class="ff"><label>금액 (원)</label><input type="number" id="fx-amt" placeholder="0" min="1"/></div>
+        <div class="ff"><label>금액 (원)</label><input type="text" id="fx-amt" placeholder="0" inputmode="numeric" oninput="fmtInput(this)" style="font-family:'DM Mono',monospace"/></div>
         <div class="ff full"><label>내용</label><input type="text" id="fx-desc" placeholder="예: 월급, 대출이자"/></div>
         <div class="ff full"><label>메모 (결제방법 등)</label><input type="text" id="fx-memo" placeholder="예: 현금, 카카오체크카드"/></div>
       </div>
@@ -494,7 +494,7 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
       <div class="ff"><label>날짜</label><input type="date" id="e-date"/></div>
       <div class="ff"><label>카테고리</label><select id="e-cat"></select></div>
       <div class="ff full"><label>내용</label><input type="text" id="e-desc"/></div>
-      <div class="ff full"><label>금액 (원)</label><input type="number" id="e-amt" min="1"/></div>
+      <div class="ff full"><label>금액 (원)</label><input type="text" id="e-amt" inputmode="numeric" oninput="fmtInput(this)" style="font-family:'DM Mono',monospace"/></div>
       <div class="ff full"><label>메모</label><input type="text" id="e-memo"/></div>
       <div class="ff full"><label>구분</label>
         <div style="display:flex;gap:16px;margin-top:4px">
@@ -535,6 +535,18 @@ const DEF_CATS={
 
 function fmt(n){return '₩'+Math.abs(Math.round(n)).toLocaleString('ko-KR');}
 function emo(name){const a=[...CATS.income,...CATS.expense];const f=a.find(c=>c.n===name);return f?f.e:'📌';}
+
+// 금액 입력창 실시간 쉼표 포맷
+function fmtInput(el){
+  const raw=el.value.replace(/[^0-9]/g,'');        // 숫자만
+  el.value=raw?Number(raw).toLocaleString('ko-KR'):''; // 쉼표 포맷
+  el.dataset.raw=raw;                               // 실제 숫자값 보존
+}
+function getRaw(id){
+  const el=document.getElementById(id);
+  // dataset.raw 우선, 없으면 쉼표 제거
+  return parseFloat((el.dataset.raw||el.value).replace(/[^0-9.]/g,''))||0;
+}
 
 // ═══════════════════════════════════════════════════
 // TOAST
@@ -700,7 +712,7 @@ async function addTx(type){
   const date=document.getElementById('a-date').value;
   const cat=document.getElementById('a-cat').value;
   const title=document.getElementById('a-desc').value.trim();
-  const amt=parseFloat(document.getElementById('a-amt').value);
+  const amt=getRaw('a-amt');
   const memo=document.getElementById('a-memo').value.trim();
   if(!date||!title||!amt||amt<=0){alert('날짜, 내용, 금액을 입력해주세요.');return;}
   const btn=document.getElementById(type==='income'?'btn-inc':'btn-exp');
@@ -710,7 +722,9 @@ async function addTx(type){
     if(error)throw error;
     TX.unshift({id:data.id,t:type,d:date,desc:title,c:cat,a:amt,m:memo});
     rSide();
-    document.getElementById('a-desc').value='';document.getElementById('a-amt').value='';document.getElementById('a-memo').value='';
+    document.getElementById('a-desc').value='';
+    const aAmt=document.getElementById('a-amt');aAmt.value='';aAmt.dataset.raw='';
+    document.getElementById('a-memo').value='';
     toast(type==='income'?'✓ 수입 저장됨':'✓ 지출 저장됨');
   }catch(e){toast('저장 실패: '+e.message,true);}
   finally{btn.textContent=orig;btn.disabled=false;}
@@ -783,7 +797,8 @@ function openEdit(id){
   document.getElementById('e-date').value=t.d;
   document.getElementById('e-cat').value=t.c;
   document.getElementById('e-desc').value=t.desc;
-  document.getElementById('e-amt').value=t.a;
+  const eAmt=document.getElementById('e-amt');
+  eAmt.value=t.a.toLocaleString('ko-KR');eAmt.dataset.raw=String(t.a);
   document.getElementById('e-memo').value=t.m||'';
   document.getElementById(t.t==='income'?'e-inc':'e-exp').checked=true;
   document.getElementById('edit-modal').style.display='flex';
@@ -794,7 +809,7 @@ async function saveEdit(){
   const date=document.getElementById('e-date').value;
   const cat=document.getElementById('e-cat').value;
   const title=document.getElementById('e-desc').value.trim();
-  const amt=parseFloat(document.getElementById('e-amt').value);
+  const amt=getRaw('e-amt');
   const memo=document.getElementById('e-memo').value.trim();
   const type=document.querySelector('input[name="e-type"]:checked')?.value;
   if(!date||!title||!amt||amt<=0||!type){alert('모든 필드를 입력해주세요.');return;}
@@ -1008,7 +1023,7 @@ async function addFixed(){
   const day=parseInt(document.getElementById('fx-day').value);
   const type=document.getElementById('fx-type').value;
   const cat=document.getElementById('fx-cat').value;
-  const amt=parseFloat(document.getElementById('fx-amt').value);
+  const amt=getRaw('fx-amt');
   const desc=document.getElementById('fx-desc').value.trim();
   const memo=document.getElementById('fx-memo').value.trim();
   if(!day||day<1||day>31||!desc||!amt||amt<=0){alert('날짜(1~31), 내용, 금액을 입력해주세요.');return;}
@@ -1017,7 +1032,8 @@ async function addFixed(){
     if(error)throw error;
     FIXED.push({id:data.id,day,type,cat,amt,desc,memo});
     FIXED.sort((a,b)=>a.day-b.day);
-    document.getElementById('fx-day').value='';document.getElementById('fx-amt').value='';
+    document.getElementById('fx-day').value='';
+    const fxAmt=document.getElementById('fx-amt');fxAmt.value='';fxAmt.dataset.raw='';
     document.getElementById('fx-desc').value='';document.getElementById('fx-memo').value='';
     rFixedList();toast('✓ 고정비 추가됨');
   }catch(e){toast('추가 실패: '+e.message,true);}
