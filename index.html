@@ -783,6 +783,17 @@ const DEF_CATS={
 function fmt(n){return '₩'+Math.abs(Math.round(n)).toLocaleString('ko-KR');}
 function emo(name){const a=[...CATS.income,...CATS.expense];const f=a.find(c=>c.n===name);return f?f.e:'📌';}
 
+// 날짜 내림차순 → 같은 날짜면 기재시간(created_at) 내림차순
+function sortTX(arr){
+  return [...arr].sort((a,b)=>{
+    const dateDiff=b.d.localeCompare(a.d);
+    if(dateDiff!==0)return dateDiff;
+    // 같은 날짜: created_at 최신순 (없으면 id 내림차순으로 대체)
+    if(a.ca&&b.ca)return b.ca.localeCompare(a.ca);
+    return b.id-a.id;
+  });
+}
+
 // 금액 입력창 실시간 쉼표 포맷
 function fmtInput(el){
   const raw=el.value.replace(/[^0-9]/g,'');        // 숫자만
@@ -839,7 +850,7 @@ async function loadAll(){
     // Transactions
     const{data:td,error:te}=await sb.from('transactions').select('*').eq('user_id',ROOM_ID).order('date',{ascending:false});
     if(te)throw te;
-    TX=(td||[]).map(r=>({id:r.id,t:r.type,d:r.date,desc:r.title,c:r.category,a:Number(r.amount),m:r.memo||''}));
+    TX=(td||[]).map(r=>({id:r.id,t:r.type,d:r.date,desc:r.title,c:r.category,a:Number(r.amount),m:r.memo||'',ca:r.created_at||''}));
 
     // Categories
     const{data:cd,error:ce}=await sb.from('categories').select('*').eq('user_id',ROOM_ID).order('id',{ascending:true});
@@ -978,7 +989,7 @@ function rDash(){
   const cm={};mtx.filter(t=>t.t==='expense').forEach(t=>cm[t.c]=(cm[t.c]||0)+t.a);
   const cats=Object.entries(cm).sort((a,b)=>b[1]-a[1]);const mx=cats.length?cats[0][1]:1;
   document.getElementById('d-cats').innerHTML=cats.length?cats.slice(0,6).map(([c,a],i)=>`<div class="catitem"><div class="catrow"><span>${emo(c)} ${c}</span><span style="font-family:'DM Mono',monospace;font-size:12px">${fmt(a)}</span></div><div class="catbg"><div class="catbar" style="width:${Math.round(a/mx*100)}%;background:${CC[i%CC.length]}"></div></div></div>`).join(''):'<div class="empty">지출 내역 없음</div>';
-  const rec=[...TX].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,12);
+  const rec=sortTX(TX).slice(0,12);
   document.getElementById('d-recent').innerHTML=rec.length?rec.map(txH).join(''):'<div class="empty">내역이 없습니다</div>';
 }
 
@@ -1005,7 +1016,7 @@ async function addTx(type){
   try{
     const{data,error}=await sb.from('transactions').insert([{user_id:ROOM_ID,type,date,title,category:cat,amount:amt,memo}]).select().single();
     if(error)throw error;
-    TX.unshift({id:data.id,t:type,d:date,desc:title,c:cat,a:amt,m:memo});
+    TX.unshift({id:data.id,t:type,d:date,desc:title,c:cat,a:amt,m:memo,ca:data.created_at||''});
     rSide();
     document.getElementById('a-desc').value='';
     const aAmt=document.getElementById('a-amt');aAmt.value='';aAmt.dataset.raw='';
@@ -1030,7 +1041,7 @@ function renderList(){
   const cat=document.getElementById('f-cat').value;
   const month=document.getElementById('f-month').value;
   const q=document.getElementById('f-q').value.trim().toLowerCase();
-  let data=[...TX].sort((a,b)=>b.d.localeCompare(a.d));
+  let data=sortTX(TX);
   if(type)data=data.filter(t=>t.t===type);
   if(cat)data=data.filter(t=>t.c===cat);
   if(month)data=data.filter(t=>t.d.startsWith(month));
@@ -1139,7 +1150,7 @@ async function saveEdit(){
   try{
     const{error}=await sb.from('transactions').update({type,date,title,category:cat,amount:amt,memo}).eq('id',editId).eq('user_id',ROOM_ID);
     if(error)throw error;
-    const i=TX.findIndex(t=>t.id===editId);if(i>-1)TX[i]={id:editId,t:type,d:date,desc:title,c:cat,a:amt,m:memo};
+    const i=TX.findIndex(t=>t.id===editId);if(i>-1)TX[i]={id:editId,t:type,d:date,desc:title,c:cat,a:amt,m:memo,ca:TX[i].ca||''};
     closeEdit();rSide();
     const pg=document.querySelector('.page.active').id;
     if(pg==='page-dashboard')rDash();
@@ -1223,7 +1234,7 @@ function rCal(){
 function calClick(dateStr){calSel=dateStr;rCal();rCalDetail(dateStr);}
 
 function rCalDetail(dateStr){
-  const items=TX.filter(t=>t.d===dateStr).sort((a,b)=>a.t.localeCompare(b.t));
+  const items=TX.filter(t=>t.d===dateStr).sort((a,b)=>{if(a.ca&&b.ca)return b.ca.localeCompare(a.ca);return b.id-a.id;});
   const[y,m,d]=dateStr.split('-');
   const dow=['일','월','화','수','목','금','토'][new Date(dateStr).getDay()];
   document.getElementById('cal-detail-date').textContent=`${y}년 ${parseInt(m)}월 ${parseInt(d)}일 (${dow})`;
@@ -1262,7 +1273,7 @@ function rStatDay(){
   const cm={};mtx.filter(t=>t.t==='expense').forEach(t=>cm[t.c]=(cm[t.c]||0)+t.a);
   const cats=Object.entries(cm).sort((a,b)=>b[1]-a[1]);const mx=cats.length?cats[0][1]:1;
   document.getElementById('sd-cats').innerHTML=cats.length?cats.slice(0,6).map(([c,a],i)=>`<div class="catitem"><div class="catrow"><span>${emo(c)} ${c}</span><span style="font-family:'DM Mono',monospace;font-size:12px">${fmt(a)}</span></div><div class="catbg"><div class="catbar" style="width:${Math.round(a/mx*100)}%;background:${CC[i%CC.length]}"></div></div></div>`).join(''):'<div class="empty">지출 없음</div>';
-  const sorted=[...mtx].sort((a,b)=>b.d.localeCompare(a.d));
+  const sorted=sortTX(mtx);
   document.getElementById('sd-list').innerHTML=sorted.length?sorted.map(txH).join(''):'<div class="empty">내역 없음</div>';
 }
 
@@ -1392,10 +1403,10 @@ async function autoFixed(){
   for(const r of toReg){
     try{
       const{data,error}=await sb.from('transactions').insert([{user_id:ROOM_ID,type:r.type,date:r.dateStr,title:r.desc,category:r.cat,amount:r.amt,memo:r.memo||''}]).select().single();
-      if(!error){TX.push({id:data.id,t:r.type,d:r.dateStr,desc:r.desc,c:r.cat,a:r.amt,m:r.memo||''});ok++;}
+      if(!error){TX.push({id:data.id,t:r.type,d:r.dateStr,desc:r.desc,c:r.cat,a:r.amt,m:r.memo||'',ca:data.created_at||''});ok++;}
     }catch(e){}
   }
-  if(ok>0){TX.sort((a,b)=>b.d.localeCompare(a.d));rSide();rDash();toast(`🔁 고정비 ${ok}건 자동 등록됨`);}
+  if(ok>0){TX.sort((a,b)=>{const d=b.d.localeCompare(a.d);if(d!==0)return d;if(a.ca&&b.ca)return b.ca.localeCompare(a.ca);return b.id-a.id;});rSide();rDash();toast(`🔁 고정비 ${ok}건 자동 등록됨`);}
 }
 
 // ═══════════════════════════════════════════════════
