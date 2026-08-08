@@ -320,12 +320,21 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 <!-- Room Gate -->
 <div id="room-gate">
   <div class="rg-logo">가계부<em>.</em></div>
-  <div class="rg-sub">방 코드를 입력하면 나만의 가계부로 연결됩니다<br>처음 사용하는 코드는 새 가계부가 생성됩니다</div>
+  <div class="rg-sub" id="rg-sub-text">방 코드와 비밀번호를 입력하세요</div>
   <div class="rg-box">
-    <input id="room-input" class="rg-input" type="text" placeholder="방 코드 입력 (예: 홍길동2026)"/>
-    <button class="rg-btn" onclick="enterRoom()">입장하기 →</button>
+    <input id="room-input" class="rg-input" type="text" placeholder="방 코드 (예: 이원영2026)"/>
+    <input id="pw-input" class="rg-input" type="password" placeholder="비밀번호"/>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:rgba(255,255,255,0.6);font-size:13px;justify-content:center">
+      <input type="checkbox" id="remember-me" style="width:16px;height:16px;cursor:pointer;accent-color:#9bce9e"/>
+      이 기기에서 자동 로그인
+    </label>
+    <div id="rg-error" style="color:#e58080;font-size:12px;text-align:center;display:none">비밀번호가 맞지 않습니다</div>
+    <button class="rg-btn" id="rg-btn" onclick="enterRoom()">입장하기 →</button>
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">
+      처음 입력하는 방 코드는 비밀번호가 새로 등록됩니다
+    </div>
   </div>
-  <div class="rg-hint">URL에 ?room=코드 를 붙여도 바로 접속됩니다</div>
+  <div class="rg-hint">URL에 ?room=코드 를 붙여도 접속 가능 (비밀번호는 별도 입력)</div>
 </div>
 
 <!-- ── 모바일 상단 헤더 ── -->
@@ -363,6 +372,8 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
     <button class="dni" id="mni-fixed" onclick="go('fixed');closeDrawer()"><span class="ic">🔁</span>고정비 관리</button>
     <button class="dni" id="mni-categories" onclick="go('categories');closeDrawer()"><span class="ic">🏷</span>카테고리 관리</button>
     <button class="dni" id="mni-import" onclick="go('import');closeDrawer()"><span class="ic">📥</span>데이터 가져오기</button>
+    <button class="dni" onclick="openChangePwModal();closeDrawer()"><span class="ic">🔒</span>비밀번호 변경</button>
+    <button class="dni" onclick="logout()" style="color:rgba(255,255,255,0.35);margin-top:8px"><span class="ic">🚪</span>로그아웃</button>
   </div>
 </div>
 
@@ -411,6 +422,8 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
     <button class="ni" onclick="go('fixed',this)"><span class="ic">🔁</span>고정비 관리</button>
     <button class="ni" onclick="go('categories',this)"><span class="ic">🏷</span>카테고리 관리</button>
     <button class="ni" onclick="go('import',this)"><span class="ic">📥</span>데이터 가져오기</button>
+    <button class="ni" onclick="openChangePwModal()"><span class="ic">🔒</span>비밀번호 변경</button>
+    <button class="ni" onclick="logout()" style="margin-top:auto;color:rgba(255,255,255,0.3)"><span class="ic">🚪</span>로그아웃</button>
   </nav>
 </aside>
 
@@ -733,6 +746,35 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 </main>
 </div>
 
+<!-- ── 비밀번호 변경 모달 ── -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:400px;margin:1rem;box-shadow:0 16px 48px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div style="font-size:16px;font-weight:600">🔒 비밀번호 변경</div>
+      <button onclick="closeChangePwModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="ff">
+        <label>현재 비밀번호</label>
+        <input type="password" id="pw-current" placeholder="현재 비밀번호 입력"/>
+      </div>
+      <div class="ff">
+        <label>새 비밀번호</label>
+        <input type="password" id="pw-new" placeholder="새 비밀번호 입력"/>
+      </div>
+      <div class="ff">
+        <label>새 비밀번호 확인</label>
+        <input type="password" id="pw-confirm" placeholder="새 비밀번호 재입력"/>
+      </div>
+      <div id="pw-modal-error" style="font-size:12px;color:var(--exp);display:none;padding:6px 0"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.25rem">
+      <button class="btn bg" style="flex:1" onclick="closeChangePwModal()">취소</button>
+      <button class="btn bi" style="flex:2" onclick="changePassword()">✓ 변경 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── 엑셀 내보내기 모달 ── -->
 <div id="export-modal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:420px;margin:1rem;box-shadow:0 16px 48px rgba(0,0,0,0.2)">
@@ -874,31 +916,150 @@ function toast(msg,err=false){
 }
 
 // ═══════════════════════════════════════════════════
-// ROOM
+// ROOM + PASSWORD
 // ═══════════════════════════════════════════════════
 function getRoomFromURL(){const p=new URLSearchParams(location.search).get('room');return p&&p.trim()?p.trim():null;}
-function enterRoom(){
-  const v=document.getElementById('room-input').value.trim();
-  if(!v){alert('방 코드를 입력해주세요.');return;}
-  const u=new URL(location.href);u.searchParams.set('room',v);location.href=u.toString();
+
+// 인증 상태 관리
+// remember=true → localStorage (영구), false → sessionStorage (탭 닫으면 소멸)
+function isAuthed(roomId){
+  return localStorage.getItem('auth_'+roomId)==='1' ||
+         sessionStorage.getItem('auth_'+roomId)==='1';
 }
-function changeRoom(){
-  const v=prompt('새 방 코드 입력:',ROOM_ID||'');
-  if(!v||!v.trim())return;
-  const u=new URL(location.href);u.searchParams.set('room',v.trim());location.href=u.toString();
+function setAuthed(roomId, remember=false){
+  if(remember){
+    localStorage.setItem('auth_'+roomId,'1');
+    // 자동로그인 방 코드 저장 (입력창 자동 채우기용)
+    localStorage.setItem('last_room', roomId);
+  } else {
+    sessionStorage.setItem('auth_'+roomId,'1');
+  }
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('room-gate').style.display==='flex')enterRoom();});
+function clearAuthed(roomId){
+  localStorage.removeItem('auth_'+roomId);
+  localStorage.removeItem('last_room');
+  sessionStorage.removeItem('auth_'+roomId);
+}
+
+async function enterRoom(){
+  const roomId=document.getElementById('room-input').value.trim();
+  const pw=document.getElementById('pw-input').value.trim();
+  const remember=document.getElementById('remember-me').checked;
+  if(!roomId){alert('방 코드를 입력해주세요.');return;}
+  if(!pw){alert('비밀번호를 입력해주세요.');return;}
+
+  const btn=document.getElementById('rg-btn');
+  const errEl=document.getElementById('rg-error');
+  btn.textContent='확인 중...';btn.disabled=true;errEl.style.display='none';
+
+  try{
+    const{data,error}=await sb.from('room_passwords').select('password').eq('room_id',roomId).single();
+
+    if(error&&error.code==='PGRST116'){
+      // 새 방 생성
+      const{error:insErr}=await sb.from('room_passwords').insert([{room_id:roomId,password:pw}]);
+      if(insErr)throw insErr;
+      setAuthed(roomId, remember);
+      const u=new URL(location.href);u.searchParams.set('room',roomId);location.href=u.toString();
+    } else if(error){
+      throw error;
+    } else {
+      if(data.password!==pw){
+        errEl.style.display='block';
+        btn.textContent='입장하기 →';btn.disabled=false;
+        return;
+      }
+      setAuthed(roomId, remember);
+      const u=new URL(location.href);u.searchParams.set('room',roomId);location.href=u.toString();
+    }
+  }catch(e){
+    alert('오류가 발생했습니다: '+e.message);
+    btn.textContent='입장하기 →';btn.disabled=false;
+  }
+}
+
+function logout(){
+  if(!confirm('로그아웃 하시겠습니까?'))return;
+  if(ROOM_ID)clearAuthed(ROOM_ID);
+  const u=new URL(location.href);u.searchParams.delete('room');location.href=u.toString();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('room-gate').style.display==='flex')enterRoom();
+});
+
+// ── 비밀번호 변경 ──
+function openChangePwModal(){
+  document.getElementById('pw-current').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-confirm').value='';
+  document.getElementById('pw-modal-error').style.display='none';
+  document.getElementById('pw-modal').style.display='flex';
+}
+function closeChangePwModal(){document.getElementById('pw-modal').style.display='none';}
+document.getElementById('pw-modal').addEventListener('click',e=>{if(e.target===document.getElementById('pw-modal'))closeChangePwModal();});
+
+async function changePassword(){
+  const cur=document.getElementById('pw-current').value.trim();
+  const nw=document.getElementById('pw-new').value.trim();
+  const cf=document.getElementById('pw-confirm').value.trim();
+  const errEl=document.getElementById('pw-modal-error');
+  errEl.style.display='none';
+
+  if(!cur||!nw||!cf){errEl.textContent='모든 항목을 입력해주세요.';errEl.style.display='block';return;}
+  if(nw!==cf){errEl.textContent='새 비밀번호가 일치하지 않습니다.';errEl.style.display='block';return;}
+  if(nw.length<4){errEl.textContent='비밀번호는 4자 이상이어야 합니다.';errEl.style.display='block';return;}
+
+  const btn=document.querySelector('#pw-modal .btn.bi');
+  const orig=btn.textContent;btn.textContent='저장 중...';btn.disabled=true;
+
+  try{
+    // 현재 비밀번호 확인
+    const{data,error}=await sb.from('room_passwords').select('password').eq('room_id',ROOM_ID).single();
+    if(error)throw error;
+    if(data.password!==cur){errEl.textContent='현재 비밀번호가 맞지 않습니다.';errEl.style.display='block';btn.textContent=orig;btn.disabled=false;return;}
+    // 새 비밀번호 저장
+    const{error:updErr}=await sb.from('room_passwords').update({password:nw}).eq('room_id',ROOM_ID);
+    if(updErr)throw updErr;
+    // 세션 인증 재발급 (기억하기 상태 유지)
+    const wasRemembered=localStorage.getItem('auth_'+ROOM_ID)==='1';
+    setAuthed(ROOM_ID, wasRemembered);
+    closeChangePwModal();
+    toast('✓ 비밀번호가 변경됐습니다');
+  }catch(e){errEl.textContent='오류: '+e.message;errEl.style.display='block';}
+  finally{btn.textContent=orig;btn.disabled=false;}
+}
 
 // ═══════════════════════════════════════════════════
 // LOAD ALL
 // ═══════════════════════════════════════════════════
 async function loadAll(){
   ROOM_ID=getRoomFromURL();
+
+  // URL에 방 코드 없을 때 — localStorage에 자동로그인 방이 있으면 바로 이동
   if(!ROOM_ID){
+    const lastRoom=localStorage.getItem('last_room');
+    if(lastRoom&&localStorage.getItem('auth_'+lastRoom)==='1'){
+      const u=new URL(location.href);u.searchParams.set('room',lastRoom);location.href=u.toString();
+      return;
+    }
     document.getElementById('loading').classList.add('hide');
     document.getElementById('room-gate').style.display='flex';
     return;
   }
+
+  // 인증 확인
+  if(!isAuthed(ROOM_ID)){
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('room-input').value=ROOM_ID;
+    // 기억하기 체크 상태 복원
+    const wasRemembered=!!localStorage.getItem('last_room');
+    const cb=document.getElementById('remember-me');
+    if(cb)cb.checked=wasRemembered;
+    document.getElementById('room-gate').style.display='flex';
+    return;
+  }
+
   document.getElementById('room-badge').textContent='🔑 '+ROOM_ID;
   const mrb=document.getElementById('mob-room-badge');if(mrb)mrb.textContent='🔑 '+ROOM_ID;
 
