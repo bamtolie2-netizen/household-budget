@@ -458,7 +458,10 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 
 <!-- LIST -->
 <div class="page" id="page-list">
-  <div class="topbar"><div><div class="ptitle">전체 내역</div><div class="psub">누적 수입·지출 기록</div></div></div>
+  <div class="topbar">
+    <div><div class="ptitle">전체 내역</div><div class="psub">누적 수입·지출 기록</div></div>
+    <button class="btn bi bsm" onclick="openExportModal()">⬇ 엑셀 내보내기</button>
+  </div>
   <div class="fbar">
     <select id="f-type" onchange="renderList()"><option value="">전체</option><option value="income">수입만</option><option value="expense">지출만</option></select>
     <select id="f-cat" onchange="renderList()"><option value="">모든 카테고리</option></select>
@@ -730,7 +733,60 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 </main>
 </div>
 
-<!-- Edit modal -->
+<!-- ── 엑셀 내보내기 모달 ── -->
+<div id="export-modal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:420px;margin:1rem;box-shadow:0 16px 48px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+      <div style="font-size:16px;font-weight:600">⬇ 엑셀 내보내기</div>
+      <button onclick="closeExportModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">×</button>
+    </div>
+
+    <div class="fg" style="margin-bottom:1rem">
+      <div class="ff">
+        <label>기간</label>
+        <select id="exp-period">
+          <option value="all">전체 기간</option>
+          <option value="year">특정 연도</option>
+          <option value="month">특정 월</option>
+          <option value="filter">현재 필터 결과</option>
+        </select>
+      </div>
+      <div class="ff">
+        <label>파일 형식</label>
+        <select id="exp-format">
+          <option value="xlsx">엑셀 (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select>
+      </div>
+      <div class="ff" id="exp-year-wrap">
+        <label>연도</label>
+        <select id="exp-year"></select>
+      </div>
+      <div class="ff" id="exp-month-wrap" style="display:none">
+        <label>월</label>
+        <select id="exp-month"></select>
+      </div>
+      <div class="ff">
+        <label>구분</label>
+        <select id="exp-type">
+          <option value="all">수입 + 지출</option>
+          <option value="income">수입만</option>
+          <option value="expense">지출만</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 미리보기 카운트 -->
+    <div id="exp-preview-info" style="font-size:13px;color:var(--text2);padding:10px 12px;background:var(--surface2);border-radius:var(--rs);margin-bottom:1rem"></div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn bg" style="flex:1" onclick="closeExportModal()">취소</button>
+      <button class="btn bi" style="flex:2" onclick="doExport()">⬇ 다운로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 수정 모달 ── -->
 <div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:var(--r);padding:1.5rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 16px 48px rgba(0,0,0,0.2)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
@@ -1698,6 +1754,143 @@ async function downloadSample(){
   XLSX.writeFile(wb,'가계부_샘플.xlsx');
   toast('✓ 샘플 파일 다운로드 완료');
 }
+
+// ═══════════════════════════════════════════════════
+// EXCEL EXPORT
+// ═══════════════════════════════════════════════════
+function openExportModal(){
+  // 연도 목록 채우기
+  const years=[...new Set(TX.map(t=>t.d.slice(0,4)))].sort().reverse();
+  const curY=new Date().getFullYear();
+  document.getElementById('exp-year').innerHTML=years.map(y=>`<option value="${y}"${y==curY?'selected':''}>${y}년</option>`).join('');
+
+  // 월 목록
+  const months=Array.from({length:12},(_,i)=>{const m=String(i+1).padStart(2,'0');return`<option value="${curY}-${m}">${curY}년 ${i+1}월</option>`;});
+  document.getElementById('exp-month').innerHTML=months.join('');
+
+  updateExpPreview();
+  document.getElementById('export-modal').style.display='flex';
+}
+
+function closeExportModal(){
+  document.getElementById('export-modal').style.display='none';
+}
+
+document.getElementById('export-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('export-modal'))closeExportModal();
+});
+
+// 기간 선택 변경 시 UI 업데이트
+function onExpPeriodChange(){
+  const v=document.getElementById('exp-period').value;
+  document.getElementById('exp-year-wrap').style.display=v==='year'?'flex':'none';
+  document.getElementById('exp-month-wrap').style.display=v==='month'?'flex':'none';
+  updateExpPreview();
+}
+
+function updateExpPreview(){
+  const data=getExpData();
+  const inc=data.filter(t=>t.t==='income').reduce((s,t)=>s+t.a,0);
+  const exp=data.filter(t=>t.t==='expense').reduce((s,t)=>s+t.a,0);
+  document.getElementById('exp-preview-info').innerHTML=
+    `총 <b>${data.length}건</b> · 수입 <span style="color:var(--inc)">${fmt(inc)}</span> · 지출 <span style="color:var(--exp)">${fmt(exp)}</span>`;
+}
+
+function getExpData(){
+  const period=document.getElementById('exp-period').value;
+  const type=document.getElementById('exp-type').value;
+  const year=document.getElementById('exp-year').value;
+  const month=document.getElementById('exp-month').value;
+
+  let data=sortTX(TX);
+
+  // 기간 필터
+  if(period==='year')      data=data.filter(t=>t.d.startsWith(year));
+  else if(period==='month') data=data.filter(t=>t.d.startsWith(month));
+  else if(period==='filter'){
+    // 현재 전체내역 필터 그대로 적용
+    const ft=document.getElementById('f-type').value;
+    const fc=document.getElementById('f-cat').value;
+    const fm=document.getElementById('f-month').value;
+    const fq=document.getElementById('f-q').value.trim().toLowerCase();
+    if(ft)data=data.filter(t=>t.t===ft);
+    if(fc)data=data.filter(t=>t.c===fc);
+    if(fm)data=data.filter(t=>t.d.startsWith(fm));
+    if(fq)data=data.filter(t=>t.desc.toLowerCase().includes(fq)||t.c.toLowerCase().includes(fq));
+  }
+
+  // 구분 필터
+  if(type!=='all') data=data.filter(t=>t.t===type);
+  return data;
+}
+
+async function doExport(){
+  const data=getExpData();
+  if(!data.length){toast('내보낼 데이터가 없습니다.',true);return;}
+
+  await loadSheetJS();
+
+  const period=document.getElementById('exp-period').value;
+  const fmt2=document.getElementById('exp-format').value;
+  const year=document.getElementById('exp-year').value;
+  const month=document.getElementById('exp-month').value;
+
+  // 파일명
+  let fname='가계부';
+  if(period==='year')       fname+=`_${year}`;
+  else if(period==='month') fname+=`_${month}`;
+  else if(period==='filter')fname+='_필터결과';
+  else                      fname+='_전체';
+  fname+=fmt2==='csv'?'.csv':'.xlsx';
+
+  // 데이터 rows
+  const header=['날짜','구분','카테고리','내용','금액','메모'];
+  const rows=data.map(t=>[
+    t.d,
+    t.t==='income'?'수입':'지출',
+    t.c,
+    t.desc,
+    t.a,
+    t.m||''
+  ]);
+
+  if(fmt2==='csv'){
+    // CSV 내보내기
+    const BOM='\uFEFF'; // 한글 깨짐 방지
+    const csv=[header,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    // XLSX 내보내기
+    const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
+    // 컬럼 너비
+    ws['!cols']=[{wch:14},{wch:6},{wch:14},{wch:24},{wch:14},{wch:20}];
+    // 금액 컬럼 숫자 포맷
+    for(let i=1;i<=rows.length;i++){
+      const cell=ws[XLSX.utils.encode_cell({r:i,c:4})];
+      if(cell)cell.z='#,##0';
+    }
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,'가계부',ws);
+    XLSX.writeFile(wb,fname);
+  }
+
+  closeExportModal();
+  toast(`✓ ${data.length}건 다운로드 완료 (${fname})`);
+}
+
+// 기간·구분 변경 감지
+['exp-period','exp-type','exp-year','exp-month'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){
+    el.addEventListener('change',()=>{
+      if(id==='exp-period') onExpPeriodChange();
+      else updateExpPreview();
+    });
+  }
+});
 
 // ═══════════════════════════════════════════════════
 // INIT
