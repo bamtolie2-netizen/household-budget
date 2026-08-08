@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.surem.gaegyebu",
+    "sha256_cert_fingerprints": [
+      "8B:30:D2:89:70:04:90:B8:8F:03:27:8E:26:3B:D2:BA:62:5A:7E:98:38:A8:BD:D2:44:AE:E4:27:75:D9:82:A9"
+    ]
+  }
+}]
