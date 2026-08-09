@@ -2,8 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>가계부</title>
+<meta name="description" content="개인 가계부 — 수입·지출 관리"/>
+<meta name="theme-color" content="#2d2a26"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="가계부"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2016,26 +2024,27 @@ async function doExport(){
   ]);
 
   if(fmt2==='csv'){
-    // CSV 내보내기
-    const BOM='\uFEFF'; // 한글 깨짐 방지
+    const BOM='\uFEFF';
     const csv=[header,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=fname;a.click();
-    URL.revokeObjectURL(url);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
   } else {
-    // XLSX 내보내기
     const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
-    // 컬럼 너비
     ws['!cols']=[{wch:14},{wch:6},{wch:14},{wch:24},{wch:14},{wch:20}];
-    // 금액 컬럼 숫자 포맷
     for(let i=1;i<=rows.length;i++){
       const cell=ws[XLSX.utils.encode_cell({r:i,c:4})];
       if(cell)cell.z='#,##0';
     }
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,'가계부',ws);
-    XLSX.writeFile(wb,fname);
+    // blob 방식으로 다운로드 (브라우저 호환성 향상)
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([wbout],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
   closeExportModal();
@@ -2059,6 +2068,11 @@ async function doExport(){
 document.getElementById('a-date').value=new Date().toISOString().slice(0,10);
 document.getElementById('imp-year').value=new Date().getFullYear();
 loadAll();
+
+// Service Worker 등록 (PWA/TWA)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
