@@ -803,9 +803,10 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
       </div>
       <div class="ff">
         <label>파일 형식</label>
-        <select id="exp-format">
+        <select id="exp-format" onchange="updateExpBtn()">
           <option value="xlsx">엑셀 (.xlsx)</option>
           <option value="csv">CSV (.csv)</option>
+          <option value="clipboard">📋 클립보드 복사 (앱용)</option>
         </select>
       </div>
       <div class="ff" id="exp-year-wrap">
@@ -831,7 +832,7 @@ main{margin-left:260px;flex:1;padding:2rem 2rem 3rem;min-width:0}
 
     <div style="display:flex;gap:8px">
       <button class="btn bg" style="flex:1" onclick="closeExportModal()">취소</button>
-      <button class="btn bi" style="flex:2" onclick="doExport()">⬇ 다운로드</button>
+      <button class="btn bi" style="flex:2" id="exp-do-btn" onclick="doExport()">⬇ 다운로드</button>
     </div>
   </div>
 </div>
@@ -1993,35 +1994,53 @@ function getExpData(){
   return data;
 }
 
+function updateExpBtn(){
+  const fmt=document.getElementById('exp-format').value;
+  const btn=document.getElementById('exp-do-btn');
+  if(btn) btn.textContent=fmt==='clipboard'?'📋 클립보드에 복사':'⬇ 다운로드';
+  updateExpPreview();
+}
+
 async function doExport(){
   const data=getExpData();
   if(!data.length){toast('내보낼 데이터가 없습니다.',true);return;}
-
-  await loadSheetJS();
 
   const period=document.getElementById('exp-period').value;
   const fmt2=document.getElementById('exp-format').value;
   const year=document.getElementById('exp-year').value;
   const month=document.getElementById('exp-month').value;
 
-  // 파일명
+  const header=['날짜','구분','카테고리','내용','금액','메모'];
+  const rows=data.map(t=>[t.d, t.t==='income'?'수입':'지출', t.c, t.desc, t.a, t.m||'']);
+
+  // 클립보드 복사 (앱용)
+  if(fmt2==='clipboard'){
+    const tsv=[header,...rows].map(r=>r.join('\t')).join('\n');
+    try{
+      await navigator.clipboard.writeText(tsv);
+      closeExportModal();
+      toast(`✓ ${data.length}건 클립보드에 복사됨\n구글 시트에 붙여넣기 하세요!`);
+    }catch(e){
+      // clipboard API 실패 시 textarea로 대체
+      const ta=document.createElement('textarea');
+      ta.value=tsv;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.focus();ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      closeExportModal();
+      toast(`✓ ${data.length}건 클립보드에 복사됨`);
+    }
+    return;
+  }
+
+  await loadSheetJS();
+
   let fname='가계부';
   if(period==='year')       fname+=`_${year}`;
   else if(period==='month') fname+=`_${month}`;
   else if(period==='filter')fname+='_필터결과';
   else                      fname+='_전체';
   fname+=fmt2==='csv'?'.csv':'.xlsx';
-
-  // 데이터 rows
-  const header=['날짜','구분','카테고리','내용','금액','메모'];
-  const rows=data.map(t=>[
-    t.d,
-    t.t==='income'?'수입':'지출',
-    t.c,
-    t.desc,
-    t.a,
-    t.m||''
-  ]);
 
   if(fmt2==='csv'){
     const BOM='\uFEFF';
@@ -2039,7 +2058,6 @@ async function doExport(){
     }
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,'가계부',ws);
-    // blob 방식으로 다운로드 (브라우저 호환성 향상)
     const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([wbout],{type:'application/octet-stream'});
     const url=URL.createObjectURL(blob);
