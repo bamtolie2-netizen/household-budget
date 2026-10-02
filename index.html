@@ -2011,11 +2011,11 @@ async function doExport(){
   const month=document.getElementById('exp-month').value;
 
   const header=['날짜','구분','카테고리','내용','금액','메모'];
-  const rows=data.map(t=>[t.d, t.t==='income'?'수입':'지출', t.c, t.desc, t.a, t.m||'']);
+  const rows=data.map(t=>[t.d, t.t==='income'?'수입':'지출', t.c||'', t.desc||'', Number(t.a)||0, t.m||'']);
 
   // 클립보드 복사 (앱용)
   if(fmt2==='clipboard'){
-    const tsv=[header,...rows].map(r=>r.join('\t')).join('\n');
+    const tsv=[header,...rows].map(r=>r.map(v=>String(v)).join('\t')).join('\n');
     try{
       await navigator.clipboard.writeText(tsv);
       closeExportModal();
