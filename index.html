@@ -1073,10 +1073,17 @@ async function loadAll(){
   const mrb=document.getElementById('mob-room-badge');if(mrb)mrb.textContent='🔑 '+ROOM_ID;
 
   try{
-    // Transactions
-    const{data:td,error:te}=await sb.from('transactions').select('*').eq('user_id',ROOM_ID).order('date',{ascending:false});
-    if(te)throw te;
-    TX=(td||[]).map(r=>({id:r.id,t:r.type,d:r.date,desc:r.title,c:r.category,a:Number(r.amount),m:r.memo||'',ca:r.created_at||''}));
+    // Transactions - 전체 로드 (1000건 제한 우회)
+    let allTx=[];let from=0;const PAGE=1000;
+    while(true){
+      const{data:td,error:te}=await sb.from('transactions').select('*').eq('user_id',ROOM_ID).order('date',{ascending:false}).range(from,from+PAGE-1);
+      if(te)throw te;
+      if(!td||td.length===0)break;
+      allTx=allTx.concat(td);
+      if(td.length<PAGE)break;
+      from+=PAGE;
+    }
+    TX=allTx.map(r=>({id:r.id,t:r.type,d:r.date,desc:r.title,c:r.category,a:Number(r.amount),m:r.memo||'',ca:r.created_at||''}));
 
     // Categories
     const{data:cd,error:ce}=await sb.from('categories').select('*').eq('user_id',ROOM_ID).order('id',{ascending:true});
